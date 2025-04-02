@@ -1,4 +1,5 @@
 <?php
+    require_once("database_init.php");
     session_start();
     $is_driver = isset($_SESSION['driver_logged_in']);
     $is_logged_in = isset($_SESSION['logged_in']) || isset($_SESSION['driver_logged_in']);
