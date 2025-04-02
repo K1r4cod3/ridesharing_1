@@ -1,5 +1,6 @@
 <?php
     require_once("config.php");
+    require_once("payment_methods.php");
     session_start();
 
     if (!isset($_GET['booking_id'])) {
@@ -29,11 +30,13 @@
 
     // Handle payment button
     if (isset($_POST['process_payment'])) {
-        if ($booking['status'] != 'completed') {
-            $error = "Cannot process payment - ride is not completed yet!";
+        if ($booking['status'] != 'in_progress') {
+            $error = "Cannot process payment - ride is not in progress!";
+        } else if (!isset($_POST['payment_method'])) {
+            $error = "Please select a payment method!";
         } else {
-            // Process payment logic here
-            header("Location: ridebooking.php");
+            $payment_method = $_POST['payment_method'];
+            header("Location: invoice.php?booking_id=$booking_id&payment_method=$payment_method");
             exit();
         }
     }
@@ -113,18 +116,33 @@
             </div>
         <?php endif; ?>
 
+        <!-- Payment Method Selection (shown only when ride is in progress) -->
+        <?php if ($booking['status'] == 'in_progress'): ?>
+            <div class="bg-white rounded-lg p-6 shadow-md mb-6">
+                <h2 class="text-2xl font-bold mb-4">Select Payment Method</h2>
+                <form method="POST" class="space-y-4">
+                    <?php foreach ($payment_methods as $value => $label): ?>
+                        <div class="flex items-center space-x-3">
+                            <input type="radio" name="payment_method" value="<?php echo $value; ?>" 
+                                   id="<?php echo $value; ?>" class="h-4 w-4">
+                            <label for="<?php echo $value; ?>" class="text-lg"><?php echo $label; ?></label>
+                        </div>
+                    <?php endforeach; ?>
+                    <div class="flex justify-center mt-6">
+                        <button type="submit" name="process_payment" class="bg-[#5F8B4C] text-white px-8 py-4 rounded-lg font-bold hover:bg-[#4a6d3c]">
+                            Process Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        <?php endif; ?>
+
         <!-- Action Buttons -->
         <div class="flex gap-4 justify-center">
             <?php if ($booking['status'] == 'pending'): ?>
                 <a href="ridebooking.php" class="bg-red-700 text-white px-8 py-4 rounded-lg font-bold">
                     Cancel Ride
                 </a>
-            <?php else: ?>
-                <form method="POST">
-                    <button type="submit" name="process_payment" class="bg-[#5F8B4C] text-white px-8 py-4 rounded-lg font-bold hover:bg-[#4a6d3c]">
-                        Process Payment
-                    </button>
-                </form>
             <?php endif; ?>
         </div>
     </div>

@@ -2,27 +2,26 @@
     require_once("config.php");
     session_start();
 
-    // Check if user is logged in (either as driver or passenger)
-    if (!isset($_SESSION['driver_logged_in']) && !isset($_SESSION['logged_in'])) {
+    if (!isset($_SESSION['logged_in']) && !isset($_SESSION['driver_logged_in'])) {
         header("Location: login.php");
         exit();
     }
 
-    // Determine if user is driver or passenger
     $is_driver = isset($_SESSION['driver_logged_in']);
     $user_id = $is_driver ? $_SESSION['driver_id'] : $_SESSION['passenger_id'];
 
-    // Fetch completed rides
-    $query = "SELECT rb.*, 
+    // Fetch completed rides from ride_records
+    $query = "SELECT rr.*, rb.pickup_location, rb.destination, rb.distance_km, rb.price,
                      CONCAT(p.first_name, ' ', p.last_name) as passenger_name,
-                     CONCAT(d.first_name, ' ', d.last_name) as driver_name
-              FROM ride_bookings rb 
-              JOIN passengers p ON rb.passenger_id = p.passenger_id 
-              JOIN drivers d ON rb.driver_id = d.driver_id
-              WHERE rb.status = 'completed' 
-              AND " . ($is_driver ? "rb.driver_id = $user_id" : "rb.passenger_id = $user_id") . "
-              ORDER BY rb.booking_id DESC";
-    
+                     CONCAT(d.first_name, ' ', d.last_name) as driver_name,
+                     d.vehicle_type, d.vehicle_plate
+              FROM ride_records rr
+              JOIN ride_bookings rb ON rr.booking_id = rb.booking_id
+              JOIN passengers p ON rr.passenger_id = p.passenger_id
+              JOIN drivers d ON rr.driver_id = d.driver_id
+              WHERE " . ($is_driver ? "rr.driver_id = $user_id" : "rr.passenger_id = $user_id") . "
+              ORDER BY rr.record_id DESC";
+
     $result = mysqli_query($conn, $query);
 ?>
 
@@ -38,7 +37,7 @@
     <div class="border-b-2 border-gray-600 bg-[#ffddab]">
         <nav class="flex justify-between items-center max-w-[1240px] mx-auto py-4">
             <a href="index.php" class="text-[#FF9A9A] font-bold text-2xl">ORSP</a>
-            <ul class="text-[#FF9A9A] flex gap-[50px] font-bold">
+            <ul class="text-[#FF9A9A] flex gap-[50px] font-bold ml-[120px]">
                 <?php if ($is_driver): ?>
                     <li><a href="driver_view_rides.php" class="hover:bg-[#5F8B4C] px-4 py-2 rounded-lg">Available Rides</a></li>
                 <?php else: ?>
@@ -61,19 +60,18 @@
                     <div class="grid grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <p class="text-[#945034] font-bold">Passenger:</p>
-                            <p class="text-black"><?php echo $ride['passenger_name']; ?></p>
+                            <p class="text-black"><?php echo htmlspecialchars($ride['passenger_name']); ?></p>
                         </div>
                         <div class="space-y-2">
                             <p class="text-[#945034] font-bold">Driver:</p>
-                            <p class="text-black"><?php echo $ride['driver_name']; ?></p>
+                            <p class="text-black"><?php echo htmlspecialchars($ride['driver_name']); ?></p>
                         </div>
                         <div class="space-y-2">
-                            <p class="text-[#945034] font-bold">Pickup Location:</p>
-                            <p class="text-black"><?php echo $ride['pickup_location']; ?></p>
-                        </div>
-                        <div class="space-y-2">
-                            <p class="text-[#945034] font-bold">Destination:</p>
-                            <p class="text-black"><?php echo $ride['destination']; ?></p>
+                            <p class="text-[#945034] font-bold">Vehicle:</p>
+                            <p class="text-black">
+                                <?php echo htmlspecialchars($ride['vehicle_type']); ?> 
+                                (<?php echo htmlspecialchars($ride['vehicle_plate']); ?>)
+                            </p>
                         </div>
                         <div class="space-y-2">
                             <p class="text-[#945034] font-bold">Distance:</p>
@@ -82,6 +80,13 @@
                         <div class="space-y-2">
                             <p class="text-[#945034] font-bold">Price:</p>
                             <p class="text-black"><?php echo number_format($ride['price'], 0, ',', '.'); ?> VND</p>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="text-[#945034] font-bold">Route:</p>
+                            <p class="text-black">
+                                From: <?php echo htmlspecialchars($ride['pickup_location']); ?><br>
+                                To: <?php echo htmlspecialchars($ride['destination']); ?>
+                            </p>
                         </div>
                     </div>
                 </div>

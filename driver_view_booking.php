@@ -11,7 +11,7 @@
     
     // Handle ride completion
     if (isset($_POST['complete'])) {
-        $query = "UPDATE ride_bookings SET status = 'completed' WHERE booking_id = '$booking_id'";
+        $query = "UPDATE ride_bookings SET status = 'in_progress' WHERE booking_id = '$booking_id'";
         mysqli_query($conn, $query);
         header("Location: driver_view_rides.php");
         exit();
