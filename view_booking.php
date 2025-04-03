@@ -10,6 +10,17 @@
 
     $booking_id = $_GET['booking_id'];
     
+    // Handle cancel ride
+    if (isset($_POST['cancel_ride'])) {
+        $update_query = "UPDATE ride_bookings SET status = 'cancelled' WHERE booking_id = $booking_id AND passenger_id = {$_SESSION['passenger_id']}";
+        if (mysqli_query($conn, $update_query)) {
+            header("Location: ridebooking.php");
+            exit();
+        } else {
+            $error = "Error cancelling ride. Please try again.";
+        }
+    }
+
     // Fetch booking details
     $query = "SELECT rb.*, 
                      CONCAT(p.first_name, ' ', p.last_name) as passenger_name,
@@ -140,9 +151,11 @@
         <!-- Action Buttons -->
         <div class="flex gap-4 justify-center">
             <?php if ($booking['status'] == 'pending'): ?>
-                <a href="ridebooking.php" class="bg-red-700 text-white px-8 py-4 rounded-lg font-bold">
-                    Cancel Ride
-                </a>
+                <form method="POST" class="inline">
+                    <button type="submit" name="cancel_ride" class="bg-red-700 text-white px-8 py-4 rounded-lg font-bold hover:bg-red-800">
+                        Cancel Ride
+                    </button>
+                </form>
             <?php endif; ?>
         </div>
     </div>

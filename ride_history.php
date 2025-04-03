@@ -11,7 +11,7 @@
     $user_id = $is_driver ? $_SESSION['driver_id'] : $_SESSION['passenger_id'];
 
     // Fetch completed rides from ride_records
-    $query = "SELECT rr.*, rb.pickup_location, rb.destination, rb.distance_km, rb.price,
+    $query = "SELECT rr.*, rb.pickup_location, rb.destination, rb.distance_km, rb.price, rb.booking_time,
                      CONCAT(p.first_name, ' ', p.last_name) as passenger_name,
                      CONCAT(d.first_name, ' ', d.last_name) as driver_name,
                      d.vehicle_type, d.vehicle_plate
@@ -20,7 +20,7 @@
               JOIN passengers p ON rr.passenger_id = p.passenger_id
               JOIN drivers d ON rr.driver_id = d.driver_id
               WHERE " . ($is_driver ? "rr.driver_id = $user_id" : "rr.passenger_id = $user_id") . "
-              ORDER BY rr.record_id DESC";
+              ORDER BY rb.booking_time DESC";
 
     $result = mysqli_query($conn, $query);
 ?>
@@ -52,20 +52,25 @@
     </div>
 
     <div class="mx-auto max-w-[1000px] p-4 bg-[#ffddab] mt-10 rounded-lg">
-        <h1 class="text-black text-4xl font-bold text-center mb-8">Completed Rides History</h1>
+        <h1 class="text-black text-4xl font-bold text-center mb-8">
+            <?php echo $is_driver ? 'Your Completed Rides as Driver' : 'Your Completed Rides as Passenger'; ?>
+        </h1>
         
         <div class="space-y-4">
             <?php while($ride = mysqli_fetch_assoc($result)): ?>
                 <div class="bg-white rounded-lg p-6 shadow-md">
                     <div class="grid grid-cols-2 gap-6">
+                        <?php if (!$is_driver): ?>
                         <div class="space-y-2">
-                            <p class="text-[#945034] font-bold">Passenger:</p>
-                            <p class="text-black"><?php echo htmlspecialchars($ride['passenger_name']); ?></p>
-                        </div>
-                        <div class="space-y-2">
-                            <p class="text-[#945034] font-bold">Driver:</p>
+                            <p class="text-[#945034] font-bold">Your Driver:</p>
                             <p class="text-black"><?php echo htmlspecialchars($ride['driver_name']); ?></p>
                         </div>
+                        <?php else: ?>
+                        <div class="space-y-2">
+                            <p class="text-[#945034] font-bold">Your Passenger:</p>
+                            <p class="text-black"><?php echo htmlspecialchars($ride['passenger_name']); ?></p>
+                        </div>
+                        <?php endif; ?>
                         <div class="space-y-2">
                             <p class="text-[#945034] font-bold">Vehicle:</p>
                             <p class="text-black">
@@ -87,6 +92,10 @@
                                 From: <?php echo htmlspecialchars($ride['pickup_location']); ?><br>
                                 To: <?php echo htmlspecialchars($ride['destination']); ?>
                             </p>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="text-[#945034] font-bold">Booking Time:</p>
+                            <p class="text-black"><?php echo date('d/m/Y H:i', strtotime($ride['booking_time'])); ?></p>
                         </div>
                     </div>
                 </div>
